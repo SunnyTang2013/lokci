@@ -44,40 +44,40 @@ public class TestEncryptionConfig {
     }
     
     /**
-     * Mock EncryptionService that uses the mock encryptor
+     * Mock EncryptionService using Mockito that doesn't require Jasypt password
      */
     @Bean
     @Primary
     public EncryptionService mockEncryptionService() {
-        return new MockEncryptionService();
-    }
-    
-    /**
-     * Simple mock implementation of EncryptionService
-     */
-    public static class MockEncryptionService implements EncryptionService {
+        EncryptionService mockService = Mockito.mock(EncryptionService.class);
         
-        @Override
-        public String encrypt(String plainText) {
-            if (plainText == null) {
-                return null;
-            }
-            return "MOCK_ENCRYPTED_" + plainText;
-        }
+        // Mock encrypt method
+        Mockito.when(mockService.encrypt(Mockito.anyString()))
+               .thenAnswer(invocation -> {
+                   String plainText = invocation.getArgument(0);
+                   if (plainText == null) {
+                       return null;
+                   }
+                   return "MOCK_ENCRYPTED_" + plainText;
+               });
         
-        @Override
-        public String decrypt(String encryptedText) {
-            if (encryptedText == null) {
-                return null;
-            }
-            if (encryptedText.startsWith("MOCK_ENCRYPTED_")) {
-                return encryptedText.substring("MOCK_ENCRYPTED_".length());
-            }
-            // Handle ENC() wrapped values
-            if (encryptedText.startsWith("ENC(") && encryptedText.endsWith(")")) {
-                return "MOCK_DECRYPTED_VALUE";
-            }
-            return "MOCK_DECRYPTED_" + encryptedText;
-        }
+        // Mock decrypt method
+        Mockito.when(mockService.decrypt(Mockito.anyString()))
+               .thenAnswer(invocation -> {
+                   String encryptedText = invocation.getArgument(0);
+                   if (encryptedText == null) {
+                       return null;
+                   }
+                   if (encryptedText.startsWith("MOCK_ENCRYPTED_")) {
+                       return encryptedText.substring("MOCK_ENCRYPTED_".length());
+                   }
+                   // Handle ENC() wrapped values
+                   if (encryptedText.startsWith("ENC(") && encryptedText.endsWith(")")) {
+                       return "MOCK_DECRYPTED_VALUE";
+                   }
+                   return "MOCK_DECRYPTED_" + encryptedText;
+               });
+        
+        return mockService;
     }
 }
